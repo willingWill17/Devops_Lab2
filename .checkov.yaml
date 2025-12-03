@@ -1,0 +1,43 @@
+# ===========================================
+# Checkov Configuration
+# ===========================================
+# Documentation: https://www.checkov.io/2.Basics/CLI%20Command%20Reference.html
+
+# Directories to scan
+directory:
+  - terraform/
+
+# Framework to use
+framework:
+  - terraform
+
+# Download external modules
+download-external-modules: true
+
+# Output format
+output:
+  - cli
+  - junitxml
+
+# Soft fail (don't fail the build)
+soft-fail: false
+
+# Log level
+log-level: WARNING
+
+# Skip specific checks (with justification)
+# Uncomment and add check IDs if needed
+# skip-check:
+#   - CKV_AWS_XXX  # Reason for skipping
+
+# Compact output
+compact: true
+
+# Show only failed checks
+# quiet: true
+
+# Checks to run (leave empty for all)
+# check:
+#   - CKV_AWS_1
+#   - CKV_AWS_2
+

@@ -1,0 +1,27 @@
+# ===========================================
+# Example Terraform Variables File
+# ===========================================
+# Copy this file to terraform.tfvars and update values
+# DO NOT commit terraform.tfvars to version control!
+
+# AWS Configuration
+region = "us-east-1"
+
+# Project Configuration
+project_name = "vprofile"
+environment  = "dev"
+
+# EKS Configuration
+clusterName = "gitopsProject-eks"
+
+# EC2 Configuration
+bastion_instance_type = "t3.micro"
+app_instance_type     = "t3.small"
+
+# SSH Public Key (generate with: ssh-keygen -t rsa -b 4096)
+# ssh_public_key = "ssh-rsa AAAA..."
+
+# Security - Restrict SSH access in production!
+# Use your office/home IP instead of 0.0.0.0/0
+allowed_ssh_cidr_blocks = ["0.0.0.0/0"]
+
