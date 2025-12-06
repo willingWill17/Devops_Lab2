@@ -19,9 +19,11 @@ bastion_instance_type = "t3.micro"
 app_instance_type     = "t3.small"
 
 # SSH Public Key (generate with: ssh-keygen -t rsa -b 4096)
-# ssh_public_key = "ssh-rsa AAAA..."
+# Replace with your actual public key
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQ... your-key-here"
 
 # Security - Restrict SSH access in production!
 # Use your office/home IP instead of 0.0.0.0/0
-allowed_ssh_cidr_blocks = ["0.0.0.0/0"]
+# Get your IP: curl ifconfig.me
+allowed_ssh_cidr_blocks = ["0.0.0.0/0"] # Change this to your IP!
 

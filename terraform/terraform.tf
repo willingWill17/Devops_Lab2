@@ -1,4 +1,12 @@
 terraform {
+
+  # Backend commented out - bucket was destroyed
+  # backend "s3" {
+  #   bucket = "vprofileactions0811"
+  #   key    = "terraform.tfstate"
+  #   region = "us-east-1"
+  # }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -26,14 +34,10 @@ terraform {
     }
   }
 
-  backend "s3" {
-    bucket = "vprofileactions0811"
-    key    = "terraform.tfstate"
-    region = "us-east-1"
-  }
-
-  required_version = "~> 1.6.3"
+  required_version = ">= 1.5.0"
 }
-##
-##
-##
+
+resource "aws_s3_bucket" "terraform_state" {
+  bucket        = "vprofileactions0811"
+  force_destroy = true
+}

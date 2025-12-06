@@ -44,5 +44,5 @@ variable "app_instance_type" {
 variable "allowed_ssh_cidr_blocks" {
   description = "CIDR blocks allowed to SSH to bastion host"
   type        = list(string)
-  default     = ["0.0.0.0/0"]  # In production, restrict this to specific IPs
+  default     = ["0.0.0.0/0"] # In production, restrict this to specific IPs
 }

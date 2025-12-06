@@ -1,6 +1,3 @@
-# ===========================================
-# Terraform
-# ===========================================
 # Local .terraform directories
 **/.terraform/*
 
@@ -22,57 +19,57 @@ override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Include override files you do wish to add to version control
-# !example_override.tf
-
-# Include tfvars files that you do wish to add to version control
-# !example.tfvars
-
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
 
-# Plan files
+# Terraform plan files
 *.tfplan
-tfplan
-plan_output.txt
+*.tfplan.*
 
-# Lock file (optional - can be committed for consistency)
-# .terraform.lock.hcl
+# Checkov reports
+checkov-report.*
+.checkov.baseline
 
-# ===========================================
+# SSH Keys
+*.pem
+*.key
+!*.pub
+
 # IDE
-# ===========================================
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 
-# ===========================================
 # OS
-# ===========================================
 .DS_Store
 Thumbs.db
 
-# ===========================================
-# Secrets
-# ===========================================
-*.pem
-*.key
-secrets/
+# Environment variables
 .env
 .env.*
+!.env.example
 
-# ===========================================
+# Backup files
+*.backup
+*.bak
+
+# Python (for Checkov)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+env/
+
+# AWS
+.aws/
+credentials
+
 # Logs
-# ===========================================
 *.log
 logs/
 
-# ===========================================
-# Checkov
-# ===========================================
-results.sarif
-results.json
-checkov_results/
+scripts
