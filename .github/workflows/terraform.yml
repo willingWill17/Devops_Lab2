@@ -29,6 +29,8 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      issues: write
+      pull-requests: write
       
     steps:
       - name: Checkout code
@@ -67,16 +69,23 @@ jobs:
       - name: Comment PR with Checkov results
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
             const checkovOutput = `### 🔒 Checkov Security Scan Results\n\n`;
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: checkovOutput + '\nScan completed. Check Actions tab for detailed results.'
-            });
+            
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: checkovOutput + '\nScan completed. Check Actions tab for detailed results.'
+              });
+            } catch (error) {
+              console.log('Could not create comment:', error.message);
+            }
 
   # Job 2: Terraform Validation and Plan
   terraform-plan:
@@ -136,7 +145,9 @@ jobs:
       - name: Comment PR with Plan
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `#### 🚀 Terraform Format and Style 🎨\`${{ steps.fmt.outcome }}\`
             #### ⚙️ Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
@@ -247,16 +258,21 @@ jobs:
       - name: Comment PR with Cost
         if: always()
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const output = `### 💰 Cost Estimation
             
             Cost estimation is available. Check the Actions logs for details.`;
             
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
-        continue-on-error: true
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              });
+            } catch (error) {
+              console.log('Could not create comment:', error.message);
+            }
