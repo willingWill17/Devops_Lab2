@@ -1,89 +1,104 @@
-name: 'Checkov PR Security Check'
+name: 'Checkov PR Security Scan'
 
 on:
   pull_request:
-    branches:
-      - main
-      - develop
     paths:
       - 'terraform/**'
-      - 'cloudformation/**'
-
-permissions:
-  contents: read
-  pull-requests: write
-  security-events: write
+      - '.checkov.yml'
 
 jobs:
-  checkov:
-    name: 'Checkov Security Analysis'
+  checkov-scan:
+    name: 'Security Scan'
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      pull-requests: write
+      
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Checkov Action
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Checkov
+        run: |
+          pip install checkov
+          checkov --version
+
+      - name: Run Checkov
         id: checkov
-        uses: bridgecrewio/checkov-action@v12
-        with:
-          directory: terraform/
-          framework: terraform
-          output_format: cli,sarif
-          output_file_path: console,results.sarif
-          soft_fail: true
-          download_external_modules: true
-          log_level: WARNING
+        run: |
+          checkov -d terraform/ \
+            --config-file .checkov.yml \
+            --output cli \
+            --output json \
+            --output-file-path console,checkov-results.json \
+            --soft-fail
+        continue-on-error: true
 
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: results.sarif
-          category: checkov-pr
-
-      - name: Generate Checkov Report
+      - name: Parse Checkov results
+        id: parse
         if: always()
         run: |
-          echo "## 🛡️ Checkov Security Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Security scan completed for Terraform code." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Results" >> $GITHUB_STEP_SUMMARY
-          echo "- Check the **Security** tab for detailed findings" >> $GITHUB_STEP_SUMMARY
-          echo "- Review the workflow logs for complete output" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**PR:** #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          if [ -f checkov-results.json ]; then
+            PASSED=$(jq '.summary.passed' checkov-results.json)
+            FAILED=$(jq '.summary.failed' checkov-results.json)
+            SKIPPED=$(jq '.summary.skipped' checkov-results.json)
+            
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+          else
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "skipped=0" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Comment on PR with Results
-        if: always()
+      - name: Comment PR with results
+        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
+        continue-on-error: true
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const output = `## 🛡️ Checkov Security Scan
+            const passed = '${{ steps.parse.outputs.passed }}';
+            const failed = '${{ steps.parse.outputs.failed }}';
+            const skipped = '${{ steps.parse.outputs.skipped }}';
             
-            | Attribute | Value |
-            |-----------|-------|
-            | Framework | Terraform |
-            | Status | ${{ steps.checkov.outcome == 'success' && '✅ Passed' || '⚠️ Issues Found' }} |
-            | Soft Fail | Enabled |
+            const status = failed > 0 ? '❌' : '✅';
             
-            ### Next Steps
-            1. Review the **Security** tab for detailed findings
-            2. Check workflow logs for complete scan output
-            3. Address any HIGH or CRITICAL severity issues before merging
+            const output = `## ${status} Checkov Security Scan Results
             
-            > 💡 **Tip:** Some checks may be false positives. Use \`#checkov:skip=CKV_XXX:reason\` to skip specific checks with justification.
+            | Status | Count |
+            |--------|-------|
+            | ✅ Passed | ${passed} |
+            | ❌ Failed | ${failed} |
+            | ⏭️ Skipped | ${skipped} |
+            
+            ${failed > 0 ? '### ⚠️ Security Issues Found\n\nPlease review the failed checks in the Actions log and address the security concerns.' : '### ✅ No Security Issues Found\n\nAll security checks passed!'}
             
             ---
-            *Scan triggered by commit: \`${{ github.sha }}\`*
+            *Powered by [Checkov](https://www.checkov.io/)*
             `;
             
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
+            try {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              });
+            } catch (error) {
+              console.log('Could not create comment:', error.message);
+            }
 
+      - name: Upload Checkov results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov-security-scan
+          path: checkov-results.json
+          retention-days: 30

@@ -73,7 +73,7 @@ Dự án này triển khai hạ tầng AWS sử dụng Terraform, bao gồm:
 
 | Tool | Phiên bản | Mục đích |
 |------|-----------|----------|
-| Terraform | ~> 1.6.3 | Infrastructure as Code |
+| Terraform | >= 1.5.0 | Infrastructure as Code |
 | AWS CLI | v2.x | AWS authentication |
 | Checkov | Latest | Security scanning |
 | Git | Latest | Version control |
